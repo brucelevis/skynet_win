@@ -60,7 +60,6 @@
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;NOUSE_JEMALLOC;DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\..\3rd\lua;..\..\posix;..\..\skynet-src;..\..\3rd\pbc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ForcedIncludeFiles>unistd.h</ForcedIncludeFiles>
-      
       <Optimization>Disabled</Optimization>
       <CompileAs>CompileAsC</CompileAs>
     </ClCompile>
@@ -98,14 +97,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\3rd\lua-cjson\dtoa_config.h" />
     <ClInclude Include="..\..\3rd\lua-cjson\fpconv.h" />
     <ClInclude Include="..\..\3rd\lua-cjson\strbuf.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\3rd\lua-cjson\dtoa.c" />
     <ClCompile Include="..\..\3rd\lua-cjson\fpconv.c" />
-    <ClCompile Include="..\..\3rd\lua-cjson\g_fmt.c" />
     <ClCompile Include="..\..\3rd\lua-cjson\lua_cjson.c" />
     <ClCompile Include="..\..\3rd\lua-cjson\strbuf.c" />
   </ItemGroup>

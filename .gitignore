@@ -3,3 +3,9 @@
 ################################################################################
 
 /build/.vs/skynet/v15
+/bin/*
+/build/obj/Debug/*
+/build/lualib/obj/*
+/build/obj/Release/*
+/build/service/obj/*
+/build/obj/Release/*
