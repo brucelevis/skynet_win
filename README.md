@@ -1,42 +1,21 @@
 ## Skynet
-
 Skynet is a lightweight online game framework, and it can be used in many other fields.
+官方仓库 https://github.com/cloudwu/skynet
 
-## Build
+## Windows版介绍
+* 此版本使用VS_Clang工具集编译所以推荐使用vs2017(vs2015没试过),优点是支持C99只需修改极少量代码即可完成Win版重构
+* 增加了几个模块cjson protobuf ltask
 
-For Linux, install autoconf first for jemalloc:
+## 修改原版的位置
+[skynet_main.c] main函数增加了 epoll_startup() 和 epoll_cleanup()
+[socket_server.c] struct socket 结构将成员type类型改为uint32_t(兼容原子操作函数);open_socket()函数将 connect 与 sp_nonblocking 处位置调换.
 
-```
-git clone https://github.com/cloudwu/skynet.git
-cd skynet
-make 'PLATFORM'  # PLATFORM can be linux, macosx, freebsd now
-```
+## 运行测试
 
-Or you can:
+## 参考代码
+https://github.com/dpull/skynet-mingw
+https://github.com/sanikoyes/skynet/tree/vs2013
 
-```
-export PLAT=linux
-make
-```
-
-For FreeBSD , use gmake instead of make.
-
-## Test
-
-Run these in different consoles:
-
-```
-./skynet examples/config	# Launch first skynet node  (Gate server) and a skynet-master (see config for standalone option)
-./3rd/lua/lua examples/client.lua 	# Launch a client, and try to input hello.
-```
-
-## About Lua version
-
-Skynet now uses a modified version of lua 5.3.3 ( https://github.com/ejoy/lua/tree/skynet ) for multiple lua states.
-
-You can also use official Lua versions, just edit the Makefile by yourself.
-
-## How To Use (Sorry, Only in Chinese now)
-
-* Read Wiki for documents https://github.com/cloudwu/skynet/wiki
-* The FAQ in wiki https://github.com/cloudwu/skynet/wiki/FAQ
+## 帮助文档
+* 在线帮助:https://github.com/cloudwu/skynet/wiki
+* FAQ: https://github.com/cloudwu/skynet/wiki/FAQ
