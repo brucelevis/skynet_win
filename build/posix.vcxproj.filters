@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="arpa">
+      <UniqueIdentifier>{0934947C-F56A-950D-9E57-7B108A6D110F}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="epoll">
+      <UniqueIdentifier>{01FC610F-6D10-8AC0-3692-2D20A26586F1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="netinet">
+      <UniqueIdentifier>{7C4F4D0B-E82E-CCA6-F146-577D5DA53208}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="sys">
+      <UniqueIdentifier>{24AC880B-90B5-887C-1931-9F7C8539947C}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\posix\arpa\inet.h">
+      <Filter>arpa</Filter>
+    </ClInclude>
+    <ClInclude Include="..\posix\dlfcn.h" />
+    <ClInclude Include="..\posix\epoll\epoll.h">
+      <Filter>epoll</Filter>
+    </ClInclude>
+    <ClInclude Include="..\posix\netinet\in.h">
+      <Filter>netinet</Filter>
+    </ClInclude>
+    <ClInclude Include="..\posix\netinet\tcp.h">
+      <Filter>netinet</Filter>
+    </ClInclude>
+    <ClInclude Include="..\posix\pthread.h" />
+    <ClInclude Include="..\posix\sched.h" />
+    <ClInclude Include="..\posix\semaphore.h" />
+    <ClInclude Include="..\posix\spoll.h" />
+    <ClInclude Include="..\posix\sync.h" />
+    <ClInclude Include="..\posix\sys\file.h">
+      <Filter>sys</Filter>
+    </ClInclude>
+    <ClInclude Include="..\posix\sys\socket.h">
+      <Filter>sys</Filter>
+    </ClInclude>
+    <ClInclude Include="..\posix\unistd.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\posix\dlfcn.c" />
+    <ClCompile Include="..\posix\epoll\epoll.c">
+      <Filter>epoll</Filter>
+    </ClCompile>
+    <ClCompile Include="..\posix\flock.c" />
+    <ClCompile Include="..\posix\spoll.c" />
+    <ClCompile Include="..\posix\unistd.c" />
+  </ItemGroup>
+</Project>
