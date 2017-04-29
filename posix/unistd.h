@@ -38,7 +38,7 @@ typedef int ssize_t;
 __declspec(dllimport) int __stdcall gethostname(char *buffer, int len);
 
 pid_t getpid();
-int kill(pid_t pid, int exit_code);
+int kill(pid_t pid, int sig);
 
 void usleep(__int64 usec);
 void sleep(size_t ms);
@@ -46,14 +46,22 @@ void sleep(size_t ms);
 enum { CLOCK_THREAD_CPUTIME_ID, CLOCK_REALTIME, CLOCK_MONOTONIC };
 int clock_gettime(int what, struct timespec *ti);
 
+#define SIGHUP	 1
+#define SIGKILL	 9
+#define SIGPIPE 13
+
+#define SA_SIGINFO      0x00000004u
+#define SA_RESTART      0x10000000u
+
 struct sigaction {
-	void (*sa_handler)(int);
 	int sa_flags;
 	int sa_mask;
+	void(*sa_handler)(int);
+	void(*sa_sigaction)(int);
 };
-enum { SIGPIPE, SIGHUP, SA_RESTART };
-void sigfillset(int *flag);
-void sigaction(int flag, struct sigaction *action, int param);
+
+#define sigfillset(pset)   (*(pset) = (unsigned int)-1)
+int sigaction(int sig, struct sigaction *in, struct sigaction *out);
 
 int pipe(int fd[2]);
 int daemon(int a, int b);

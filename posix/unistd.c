@@ -12,11 +12,20 @@ LONG _InterlockedAdd_r(LONG volatile *Addend, LONG Value) {
 }
 
 pid_t getpid() {
-	return GetCurrentProcess();
+	return GetCurrentProcessId();
 }
 
-int kill(pid_t pid, int exit_code) {
-	return TerminateProcess(pid, exit_code);
+int kill(pid_t pid, int sig) {
+	HANDLE h = OpenProcess(PROCESS_TERMINATE, 0, pid);
+	if (h == NULL)
+		return errno = EINVAL;
+	if (!TerminateProcess(h, 127)) {
+		errno = EINVAL;
+		CloseHandle(h);
+		return -1;
+	};
+	CloseHandle(h);
+	return 0;
 }
 
 void usleep(__int64 usec)
@@ -38,66 +47,118 @@ int clock_gettime(int what, struct timespec *ti) {
 	return timespec_get(ti, TIME_UTC);
 }
 
-void sigfillset(int *flag) {
-	// Not implemented
+int sigaction(int sig, struct sigaction *in, struct sigaction *out) {
+	if (in->sa_flags & SA_SIGINFO)
+		signal(sig, in->sa_sigaction);
+	else
+		signal(sig, in->sa_handler);
 }
 
-void sigaction(int flag, struct sigaction *action, int param) {
-	// Not implemented
-	//__asm int 3;
+void socket_keepalive(int fd) {
+	int keepalive = 1;
+	int ret = setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, (void *)&keepalive, sizeof(keepalive));
+	assert(ret != SOCKET_ERROR);
+}
+
+int _win_socketpair(int af, int type, int protocol, int socket_vector[2])
+{
+	int iRet;
+	SOCKET listening_socket = INVALID_SOCKET;
+	SOCKET client_socket = INVALID_SOCKET;
+	SOCKET server_socket = INVALID_SOCKET;
+	struct sockaddr_in listen_on;
+	struct sockaddr_in connected_as;
+	struct sockaddr_in connecting;
+	int alen;
+	int res;
+	unsigned long p;
+
+	do
+	{
+		listening_socket = INVALID_SOCKET;
+		client_socket = INVALID_SOCKET;
+		server_socket = INVALID_SOCKET;
+
+		client_socket = socket(af, type, protocol);
+		if (client_socket == INVALID_SOCKET)
+			goto fail_socketpair;
+
+		listening_socket = socket(af, type, protocol);
+		if (listening_socket == INVALID_SOCKET)
+			goto fail_socketpair;
+
+		p = 1;
+		res = ioctlsocket(client_socket, FIONBIO, &p);
+		if (res != 0)
+			goto fail_socketpair;
+
+		alen = sizeof(listen_on);
+		listen_on.sin_family = af;
+		listen_on.sin_port = 0;
+		listen_on.sin_addr.S_un.S_un_b.s_b1 = 127;
+		listen_on.sin_addr.S_un.S_un_b.s_b2 = 0;
+		listen_on.sin_addr.S_un.S_un_b.s_b3 = 0;
+		listen_on.sin_addr.S_un.S_un_b.s_b4 = 1;
+		res = bind(listening_socket, (const struct sockaddr *) &listen_on, alen);
+		if (res != 0)
+			goto fail_socketpair;
+
+		res = getsockname(listening_socket, (struct sockaddr *) &listen_on, &alen);
+		if (res != 0)
+			goto fail_socketpair;
+
+		res = listen(listening_socket, 0);
+		if (res != 0)
+			goto fail_socketpair;
+
+		res = connect(client_socket, (const struct sockaddr *) &listen_on, alen);
+		if ((res != 0) && WSAEWOULDBLOCK != GetLastError())
+			goto fail_socketpair;
+
+		server_socket = accept(listening_socket, (struct sockaddr *) &connecting, &alen);
+		if (server_socket == INVALID_SOCKET)
+			goto fail_socketpair;
+
+		closesocket(listening_socket);
+		listening_socket = INVALID_SOCKET;
+
+		res = getsockname(client_socket, (struct sockaddr *) &connected_as, &alen);
+		if (res != 0)
+			goto fail_socketpair;
+
+		if (memcmp(&connected_as, &connecting, alen) != 0)
+		{
+			closesocket(client_socket);
+			closesocket(server_socket);
+			continue;
+		}
+
+		p = 0;
+		ioctlsocket(server_socket, FIONBIO, &p);
+		ioctlsocket(client_socket, FIONBIO, &p);
+		socket_keepalive(server_socket);
+		socket_keepalive(client_socket);
+
+		socket_vector[0] = client_socket;
+		socket_vector[1] = server_socket;
+		return 0;
+	} while (1);
+
+fail_socketpair:
+	{
+		if (client_socket != INVALID_SOCKET)
+			closesocket(client_socket);
+		if (listening_socket != INVALID_SOCKET)
+			closesocket(listening_socket);
+		if (server_socket != INVALID_SOCKET)
+			closesocket(server_socket);
+		return -1;
+	}
 }
 
 int pipe(int fds[2])
 {
-	struct sockaddr_in name;
-	int namelen = sizeof(name);
-	SOCKET server = INVALID_SOCKET;
-	SOCKET client1 = INVALID_SOCKET;
-	SOCKET client2 = INVALID_SOCKET;
-
-	memset(&name, 0, sizeof(name));
-	name.sin_family = AF_INET;
-	name.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-
-	server = socket(AF_INET, SOCK_STREAM, 0);
-	if (server == INVALID_SOCKET)
-		goto failed;
-
-	if (bind(server, (struct sockaddr*)&name, namelen) == SOCKET_ERROR)
-		goto failed;
-
-	if (listen(server, 5) == SOCKET_ERROR)
-		goto failed;
-
-	if (getsockname(server, (struct sockaddr*)&name, &namelen) == SOCKET_ERROR)
-		goto failed;
-
-	client1 = socket(AF_INET, SOCK_STREAM, 0);
-	if (client1 == INVALID_SOCKET)
-		goto failed;
-
-	if (connect(client1, (struct sockaddr*)&name, namelen) == SOCKET_ERROR)
-		goto failed;
-
-	client2 = accept(server, (struct sockaddr*)&name, &namelen);
-	if (client2 == INVALID_SOCKET)
-		goto failed;
-
-	closesocket(server);
-	fds[0] = client1;
-	fds[1] = client2;
-	return 0;
-
-failed:
-	if (server != INVALID_SOCKET)
-		closesocket(server);
-
-	if (client1 != INVALID_SOCKET)
-		closesocket(client1);
-
-	if (client2 != INVALID_SOCKET)
-		closesocket(client2);
-	return -1;
+	return _win_socketpair(AF_INET, SOCK_STREAM, 0 ,fds);
 }
 
 int write(int fd, const void *ptr, size_t sz) {
@@ -194,11 +255,4 @@ int fcntl(int fd, int cmd, long arg) {
 		ioctlsocket(fd, FIONBIO, &ulOption);
 	}
 	return 1;
-}
-
-void socket_keepalive(int fd) {
-	int keepalive = 1;
-	int ret = setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, (void *)&keepalive, sizeof(keepalive));
-
-	assert(ret != SOCKET_ERROR);
 }
