@@ -1,11 +1,20 @@
 #include "unistd.h"
-#define _WINSOCK_DEPRECATED_NO_WARNINGS
-#define WIN32_LEAN_AND_MEAN
-
 #include <conio.h>
 #include <Windows.h>
 #include <WinSock2.h>
 #include <stdlib.h>
+
+
+//////////////////////////////////////////////////////////////////////////
+__attribute__((constructor))
+static void main_construct() {
+	epoll_startup();
+}
+__attribute__((destructor))
+static  void main_destruct() {
+	epoll_cleanup();
+}
+//////////////////////////////////////////////////////////////////////////
 
 LONG _InterlockedAdd_r(LONG volatile *Addend, LONG Value) {
 	return InterlockedExchangeAdd(Addend, Value) + Value;
