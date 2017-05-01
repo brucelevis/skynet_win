@@ -7,7 +7,6 @@ Skynet is a lightweight online game framework, and it can be used in many other 
 * 增加了几个模块cjson protobuf ltask  
 
 ## 修改原版的位置
-[skynet_main.c] main函数增加了 epoll_startup() 和 epoll_cleanup()  
 [socket_server.c] struct socket 结构将成员type类型改为uint32_t(兼容原子操作函数);open_socket()函数将 connect 与 sp_nonblocking 处位置调换.  
 
 ## 运行测试
