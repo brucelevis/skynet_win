@@ -21,6 +21,12 @@ typedef int ssize_t;
 #define srandom srand
 #define snprintf _snprintf
 
+#define connect s_connect
+#define send	s_send
+#define recv	s_recv
+#define sendto	s_sendto
+#define recvfrom s_recvfrom
+
 #define O_NONBLOCK 1
 #define F_SETFL 0
 #define F_GETFL 1
@@ -75,4 +81,5 @@ int close(int fd);
 int fcntl(int fd, int cmd, long arg);
 int flock(int fd, int op);
 
+int wsaerr();
 char *strsep(char **stringp, const char *delim);

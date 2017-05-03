@@ -432,9 +432,9 @@ open_socket(struct socket_server *ss, struct request_open * request, struct sock
 			continue;
 		}
 		socket_keepalive(sock);
-		status = connect( sock, ai_ptr->ai_addr, ai_ptr->ai_addrlen);
 		sp_nonblocking(sock);
-		if ( status != 0 && errno != EINPROGRESS) {
+		status = connect( sock, ai_ptr->ai_addr, ai_ptr->ai_addrlen);
+		if ( status != 0 && errno != EAGAIN && errno != EINPROGRESS) {
 			close(sock);
 			sock = -1;
 			continue;

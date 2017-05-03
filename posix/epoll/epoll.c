@@ -224,8 +224,8 @@ int epoll_wait(int epfd, struct epoll_event* events, int maxevents, int timeout)
         return 0;
 
     if (total < 0) {
-        errno = WSAGetLastError();
-        return -1;
+		errno = wsaerr();
+        return SOCKET_ERROR;
     }
 
 	SPIN_LOCK(epoll);

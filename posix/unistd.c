@@ -177,10 +177,11 @@ int write(int fd, const void *ptr, size_t sz) {
 	vecs[0].len = sz;
 
     DWORD bytesSent;
-    if(WSASend(fd, vecs, 1, &bytesSent, 0, NULL, NULL))
-        return -1;
-    else
-        return bytesSent;
+    if(WSASend(fd, vecs, 1, &bytesSent, 0, NULL, NULL) == 0)
+		return bytesSent;
+
+	errno = wsaerr();
+	return SOCKET_ERROR;
 }
 
 int read(int fd, void *buffer, size_t sz) {
@@ -211,12 +212,13 @@ int read(int fd, void *buffer, size_t sz) {
 
     DWORD bytesRecv = 0;
     DWORD flags = 0;
-    if(WSARecv(fd, vecs, 1, &bytesRecv, &flags, NULL, NULL)) {
-		if(WSAGetLastError() == WSAECONNRESET)
-			return 0;
-        return -1;
-	} else
+    if(WSARecv(fd, vecs, 1, &bytesRecv, &flags, NULL, NULL) == 0)
         return bytesRecv;
+	if (WSAGetLastError() == WSAECONNRESET)
+		return 0;
+
+	errno = wsaerr();
+	return SOCKET_ERROR;
 }
 
 int close(int fd) {
@@ -253,6 +255,159 @@ char *strsep(char **stringp, const char *delim)
         } while (sc != 0);
     }
     /* NOTREACHED */
+}
+
+int wsaerr()
+{
+	int e = ENOSYS;
+	switch (h_errno)
+	{
+		case WSAEINVAL:
+		case WSANOTINITIALISED:
+		case WSAEINVALIDPROVIDER:
+		case WSAEINVALIDPROCTABLE:
+		case WSAEDESTADDRREQ:
+			e = EINVAL;
+			break;
+		case WSAEINPROGRESS:
+			e = EINPROGRESS;
+			break;
+		case WSAEFAULT:
+			e = EFAULT;
+			break;
+		case WSAEISCONN:
+			e = EISCONN;
+			break;
+		case WSAEMSGSIZE:
+			e = EMSGSIZE;
+			break;
+		case WSAEAFNOSUPPORT:
+			e = EAFNOSUPPORT;
+			break;
+		case WSAEMFILE:
+			e = EMFILE;
+			break;
+		case WSAENOBUFS:
+			e = ENOBUFS;
+			break;
+		case WSAEPROTONOSUPPORT:
+		case WSAEPROTOTYPE:
+		case WSAESOCKTNOSUPPORT:
+			e = EPROTONOSUPPORT;
+			break;
+		case WSAECONNABORTED:
+			e = ECONNABORTED;
+			break;
+		case WSAECONNREFUSED:
+			e = ECONNREFUSED;
+			break;
+		case WSAECONNRESET:
+			e = ECONNRESET;
+			break;
+		case WSAEINTR:
+			e = EINTR;
+			break;
+		case WSAENOTSOCK:
+			e = ENOTSOCK;
+			break;
+		case WSAEOPNOTSUPP:
+			e = EOPNOTSUPP;
+			break;
+		case WSAEWOULDBLOCK:
+			e = EAGAIN;
+			break;
+		case WSAEACCES:
+			e = EACCES;
+			break;
+		case WSAEADDRINUSE:
+			e = EADDRINUSE;
+			break;
+		case WSAEADDRNOTAVAIL:
+			e = EADDRNOTAVAIL;
+			break;
+		case WSAETIMEDOUT:
+			e = ETIMEDOUT;
+			break;
+		case WSAEHOSTUNREACH:
+		case WSAEHOSTDOWN:
+		case WSAHOST_NOT_FOUND:
+		case WSAENETDOWN:
+		case WSAENETUNREACH:
+		case WSAENETRESET:
+			e = EHOSTUNREACH;
+			break;
+		case WSAENOTCONN:
+		case WSAESHUTDOWN:
+		case WSAEDISCON:
+			e = ENOTCONN;
+			break;
+		default:
+			e = EINVAL;
+	}
+	return e;
+}
+
+int s_connect(SOCKET s, const struct sockaddr FAR *name, int namelen){
+	int err = WSAConnect(s, name, namelen, NULL, NULL, NULL, NULL);
+	if (err == SOCKET_ERROR)
+		errno = wsaerr();
+	return err;
+}
+
+int s_send(SOCKET s, const char FAR * buf, int len, int flags){
+	WSABUF data[1];
+	data[0].buf = buf;
+	data[0].len = len;
+	
+	DWORD bytesSent;
+	if (WSASend(s, data, 1, &bytesSent, flags, NULL, NULL) == 0)
+		return bytesSent;
+
+	errno = wsaerr();
+	return SOCKET_ERROR;
+}
+
+int s_recv(SOCKET s, char FAR * buf, int len, int flags){
+	WSABUF data[1];
+	data[0].buf = buf;
+	data[0].len = len;
+
+	DWORD bytesRecv = 0;
+	if (WSARecv(s, data, 1, &bytesRecv, &flags, NULL, NULL) == 0)
+		return bytesRecv;
+	if (WSAGetLastError() == WSAECONNRESET)
+		return 0;
+
+	errno = wsaerr();
+	return SOCKET_ERROR;
+}
+
+int s_sendto(SOCKET s, const char FAR * buf, int len, int flags, const struct sockaddr FAR *to, int tolen) {
+	WSABUF data[1];
+	data[0].buf = buf;
+	data[0].len = len;
+
+	DWORD bytesSent;
+	if (WSASendTo(s, data, 1, &bytesSent, flags, to, tolen, NULL, NULL) == 0)
+		return bytesSent;
+
+	errno = wsaerr();
+	return SOCKET_ERROR;
+}
+
+int s_recvfrom(SOCKET s,char FAR * buf, int len, int flags, struct sockaddr FAR * from, int FAR * fromlen){
+	WSABUF data[1];
+	data[0].buf = buf;
+	data[0].len = len;
+
+	DWORD bytesRecv = 0;
+	if (WSARecvFrom(s ,data ,1 ,&bytesRecv ,&flags ,from ,fromlen ,NULL ,NULL) == 0)
+		return bytesRecv;
+	if (WSAGetLastError() == WSAECONNRESET)
+		return 0;
+
+	errno = wsaerr();
+	return SOCKET_ERROR;
 }
 
 int fcntl(int fd, int cmd, long arg) {
