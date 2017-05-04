@@ -125,7 +125,6 @@ main(int argc, char *argv[]) {
 	}
 
 	luaS_initshr();
-	epoll_startup();
 	skynet_globalinit();
 	skynet_env_init();
 
@@ -161,7 +160,6 @@ main(int argc, char *argv[]) {
 
 	skynet_start(&config);
 	skynet_globalexit();
-	epoll_cleanup();
 	luaS_exitshr();
 
 	return 0;
